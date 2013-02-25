@@ -19,13 +19,15 @@ class MainFrame(wx.Frame):
         # Menu Bar
         self.mainFrame_menubar = wx.MenuBar()
         wxglade_tmp_menu = wx.Menu()
-        self.load = wx.MenuItem(wxglade_tmp_menu, wx.NewId(), "Load", "", wx.ITEM_NORMAL)
+        self.load = wx.MenuItem(wxglade_tmp_menu, wx.NewId(), "&Load", "", wx.ITEM_NORMAL)
         wxglade_tmp_menu.AppendItem(self.load)
-        self.restart = wx.MenuItem(wxglade_tmp_menu, wx.NewId(), "Restart", "", wx.ITEM_NORMAL)
+        self.restart = wx.MenuItem(wxglade_tmp_menu, wx.NewId(), "&Restart", "", wx.ITEM_NORMAL)
         wxglade_tmp_menu.AppendItem(self.restart)
-        self.play = wx.MenuItem(wxglade_tmp_menu, wx.NewId(), "Play", "", wx.ITEM_NORMAL)
+        self.play = wx.MenuItem(wxglade_tmp_menu, wx.NewId(), "&Play", "", wx.ITEM_NORMAL)
         wxglade_tmp_menu.AppendItem(self.play)
-        self.mainFrame_menubar.Append(wxglade_tmp_menu, "File")
+        self.quit = wx.MenuItem(wxglade_tmp_menu, wx.NewId(), "&Quit", "", wx.ITEM_NORMAL)
+        wxglade_tmp_menu.AppendItem(self.quit)
+        self.mainFrame_menubar.Append(wxglade_tmp_menu, "&File")
         self.SetMenuBar(self.mainFrame_menubar)
         # Menu Bar end
         
@@ -62,13 +64,17 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.menuLoad, self.load)
         self.Bind(wx.EVT_MENU, self.menuRestart, self.restart)
         self.Bind(wx.EVT_MENU, self.menuPlay, self.play)
+        self.Bind(wx.EVT_MENU, self.menuQuit, self.quit)
         self.Bind(wx.EVT_TOOL, self.menuLoad, self.load_tool)
         self.Bind(wx.EVT_TOOL, self.menuRestart, self.restart_tool)
         self.Bind(wx.EVT_TOOL, self.menuPlay, self.play_tool)
+        self.Bind(wx.EVT_TOOL, self.menuPresentation, self.presentation_tool)
         self.Bind(wx.EVT_TIMER, self.Update, self.timer)
 
         self.timer.Start(1000.0 / 30.0)
         # end wxGlade
+
+        self.path = None
 
     def Update(self, e):
         self.puzzle.Update()
@@ -99,7 +105,7 @@ class MainFrame(wx.Frame):
         dialog = wx.FileDialog(self, style=wx.FD_OPEN, wildcard=wldcrd)
         dialog.ShowModal()
         self.path = dialog.GetPath()
-        if wx.Image.CanRead(self.path):
+        if self.path and wx.Image.CanRead(self.path):
             self.puzzle.LoadPuzzle(self.path)
         else:
             pass
@@ -107,13 +113,23 @@ class MainFrame(wx.Frame):
             #w.ShowModal()
 
     def menuRestart(self, event):  # wxGlade: MainFrame.<event_handler>
-        if wx.Image.CanRead(self.path):
+        if self.path and wx.Image.CanRead(self.path):
             self.puzzle.LoadPuzzle(self.path)
         else:
             pass
 
     def menuPlay(self, event):
         print "Event handler `menuPlay' not implemented!"
+
+    def menuPresentation(self, event):
+        print "Event handler `menuPresentation' not implemented!"
+
+    def menuQuit(self, event):
+        self.Close()
+
+class PresentationFrame(wx.Frame):
+    def __init__(self, *args, **kwds):
+        wx.Frame.__init__(self, *args, **kwds)
 
 # end of class MainFrame
 if __name__ == "__main__":
