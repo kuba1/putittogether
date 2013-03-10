@@ -7,20 +7,20 @@ import pygame
 from pygame.locals import *
 import wx
 
-def GetRandomEdge():
+def get_random_edge():
     if random.random() > 0.5: return Element.CONCAVE
     else: return Element.CONVEX
 
-def Distance(p1, p2):
+def distance(p1, p2):
     return math.sqrt(math.pow(p1[0] - p2[0], 2) + math.pow(p1[1] - p2[1], 2))
 
-def Opposite(side):
+def opposite(side):
     if side - 2 < 0:
         return side + 2
     else:
         return side - 2
 
-def Neighbouring(side):
+def neighbouring(side):
     n = [side - 1, side + 1]
     if n[0] is -1:
         n[0] = 3
@@ -69,9 +69,9 @@ class Element(pygame.sprite.Sprite):
     def attach(self, e, side):
         if self.attached[side] != e:
             self.attached[side] = e
-            e.attach(self, Opposite(side))
+            e.attach(self, opposite(side))
 
-    def attachActual(self, e, side, move = False):
+    def attach_actual(self, e, side, move = False):
         if self.attached_actual[side] != e:
             if move:
                 if side is Element.LEFT:
@@ -90,35 +90,35 @@ class Element(pygame.sprite.Sprite):
                     print('oops... error...')
 
             self.attached_actual[side] = e
-            e.attachActual(self, Opposite(side))
+            e.attach_actual(self, opposite(side))
 
             if move:
-                self.checkOtherEdges(side)
+                self.check_other_edges(side)
 
-    def detachActualAll(self):
+    def detach_actual_all(self):
         for i, e in enumerate(self.attached_actual):
             if e:
                 self.attached_actual[i] = None
-                e.detachActual(Opposite(i))
+                e.detach_actual(opposite(i))
 
-    def detachActual(self, side):
+    def detach_actual(self, side):
         if self.attached_actual[side]:
             e = self.attached_actual[side]
             self.attached_actual[side] = None
-            e.detachActual(Opposite(side))
+            e.detach_actual(opposite(side))
 
-    def checkOtherEdges(self, side):
+    def check_other_edges(self, side):
         if not self.is_checking:
             self.is_checking = True
             for i, e in enumerate(self.attached_actual):
                 if i is side:
                     continue
                 if not e:
-                    m = self.group.checkMatchingEdge(self, i)
+                    m = self.group.check_matching_edge(self, i)
                     if m:
-                        self.attachActual(m, i)
+                        self.attach_actual(m, i)
                 else:
-                    e.checkOtherEdges(Opposite(i))
+                    e.check_other_edges(opposite(i))
 
     def verify(self):
         for i, e in enumerate(self.attached):
@@ -126,22 +126,22 @@ class Element(pygame.sprite.Sprite):
                 return False
         return True
 
-    def setEdge(self, edge, side):
+    def set_edge(self, edge, side):
         self.edges[side] = edge
 
-    def createFlatEdges(self):
+    def create_flat_edges(self):
         for i, e in enumerate(self.edges):
             if not e:
                 self.edges[i] = Element.FLAT
                 if self.attached[i]:
-                    self.attached[i].setEdge(Element.FLAT, Opposite(i))
+                    self.attached[i].set_edge(Element.FLAT, opposite(i))
 
-    def createRandomEdges(self):
+    def create_random_edges(self):
         for i, e in enumerate(self.edges):
             if not e:
                 if self.attached[i]:
-                    self.edges[i] = GetRandomEdge()
-                    self.attached[i].setEdge(-self.edges[i], Opposite(i))
+                    self.edges[i] = get_random_edge()
+                    self.attached[i].set_edge(-self.edges[i], opposite(i))
                 else:
                     self.edges[i] = Element.FLAT
 
@@ -157,47 +157,47 @@ class EnhancedLayeredUpdates(pygame.sprite.LayeredUpdates):
                 return False
         return True
 
-    def clearMoved(self):
+    def clear_moved(self):
         for s in self.sprites():
             if s.was_moved:
                 s.was_moved = False
 
-    def clearChecking(self):
+    def clear_checking(self):
         for s in self.sprites():
             if s.is_checking:
                 s.is_checking = False
 
-    def checkMatchingEdge(self, e, edge):
+    def check_matching_edge(self, e, edge):
         sps = self.sprites()
 
         for s in sps:
             if s is e:
                 continue
             if edge is Element.LEFT:
-                dl = Distance(e.rect.midleft, s.rect.midright)
+                dl = distance(e.rect.midleft, s.rect.midright)
             elif edge is Element.UP:
-                dl = Distance(e.rect.midtop, s.rect.midbottom)
+                dl = distance(e.rect.midtop, s.rect.midbottom)
             elif edge is Element.RIGHT:
-                dl = Distance(e.rect.midright, s.rect.midleft)
+                dl = distance(e.rect.midright, s.rect.midleft)
             elif edge is Element.DOWN:
-                dl = Distance(e.rect.midbottom, s.rect.midtop)
+                dl = distance(e.rect.midbottom, s.rect.midtop)
             if dl < 0.001:
                 return s
         return None
 
-    def findNearestByEdge(self, e):
+    def find_nearest_by_edge(self, e):
         sps = self.sprites()
 
-        nearest_dist = Distance(e.rect.midleft, sps[0].rect.midright)
+        nearest_dist = distance(e.rect.midleft, sps[0].rect.midright)
         nearest_edge = Element.LEFT
         nearest = sps[0]
         for s in sps:
             if s is e or s in e.attached_actual:
                 continue
-            dl = Distance(e.rect.midleft, s.rect.midright)
-            du = Distance(e.rect.midtop, s.rect.midbottom)
-            dr = Distance(e.rect.midright, s.rect.midleft)
-            db = Distance(e.rect.midbottom, s.rect.midtop)
+            dl = distance(e.rect.midleft, s.rect.midright)
+            du = distance(e.rect.midtop, s.rect.midbottom)
+            dr = distance(e.rect.midright, s.rect.midleft)
+            db = distance(e.rect.midbottom, s.rect.midtop)
             if dl < nearest_dist:
                 nearest_dist = dl
                 nearest_edge = Element.LEFT
@@ -233,83 +233,83 @@ class PuzzleFrame(wx.Panel):
         self.selected = None
         self.dragging = False
         self.resize = False
-        self.update = False
+        self.do_update = False
 
-        self.Bind(wx.EVT_LEFT_DOWN, self.OnLeftDown)
-        self.Bind(wx.EVT_RIGHT_DOWN, self.OnRightDown)
-        self.Bind(wx.EVT_LEFT_UP, self.OnUp)
-        self.Bind(wx.EVT_RIGHT_UP, self.OnUp)
-        self.Bind(wx.EVT_MOTION, self.OnMotion)
-        self.Bind(wx.EVT_SIZE, self.OnResize)
-        self.Bind(wx.EVT_PAINT, self.OnPaint)
+        self.Bind(wx.EVT_LEFT_DOWN, self._on_left_down)
+        self.Bind(wx.EVT_RIGHT_DOWN, self._on_right_down)
+        self.Bind(wx.EVT_LEFT_UP, self._on_up)
+        self.Bind(wx.EVT_RIGHT_UP, self._on_up)
+        self.Bind(wx.EVT_MOTION, self._on_motion)
+        self.Bind(wx.EVT_SIZE, self._on_resize)
+        self.Bind(wx.EVT_PAINT, self._on_paint)
 
-    def OnPaint(self, e):
-        self.Redraw()
+    def _on_paint(self, e):
+        self._redraw()
         e.Skip()
 
-    def OnLeftDown(self, e):
+    def _on_left_down(self, e):
         self.mouse_last = e.GetPosition()
         sels = self.elements_group.get_sprites_at(e.GetPosition())
         num = len(sels)
         if num > 0:
             self.selected = sels[num - 1]
-            self.selected.detachActualAll()
+            self.selected.detach_actual_all()
             self.elements_group.move_to_front(self.selected)
-            self.update = True
+            self.do_update = True
         else:
             self.selected = None
 
-    def OnRightDown(self, e):
+    def _on_right_down(self, e):
         self.mouse_last = e.GetPosition()
         sels = self.elements_group.get_sprites_at(e.GetPosition())
         num = len(sels)
         if num > 0:
             self.selected = sels[num - 1]
             self.elements_group.move_to_front(self.selected)
-            self.update = True
+            self.do_update = True
         else:
             self.selected = None
 
-    def OnUp(self, e):
+    def _on_up(self, e):
         if self.dragging:
             self.dragging = False
-            elem, edge, dist = self.elements_group.findNearestByEdge(self.selected)
+            elem, edge, dist = self.elements_group.find_nearest_by_edge(self.selected)
             if dist < 20.0:
-                self.selected.attachActual(elem, edge, True)
-                #elem.attachActual(selected, Opposite(edge), True)
-                self.update = True
-                self.elements_group.clearMoved()
-                self.elements_group.clearChecking()
+                self.selected.attach_actual(elem, edge, True)
+                #elem.attach_actual(selected, opposite(edge), True)
+                self.do_update = True
+                self.elements_group.clear_moved()
+                self.elements_group.clear_checking()
                 if self.elements_group.verify():
                     wx.MessageBox('Gratuluje! Jestes mistrzem!', 'Info', wx.OK | wx.ICON_INFORMATION);
 
-    def OnMotion(self, e):
+    def _on_motion(self, e):
         if e.Dragging():
             if self.selected:
                 if e.LeftIsDown():
                     self.selected.move(e.GetX() - self.mouse_last[0], e.GetY() - self.mouse_last[1])
                     self.mouse_last = e.GetPosition()
                     self.dragging = True
-                    self.elements_group.clearMoved()
-                    self.update = True
+                    self.elements_group.clear_moved()
+                    self.do_update = True
                 if e.RightIsDown():
                     self.selected.move(e.GetX() - self.mouse_last[0], e.GetY() - self.mouse_last[1], True)
                     self.mouse_last = e.GetPosition()
                     self.dragging = True
-                    self.elements_group.clearMoved()
-                    self.update = True
+                    self.elements_group.clear_moved()
+                    self.do_update = True
 
-    def OnResize(self, e):
+    def _on_resize(self, e):
         self.size = self.GetSize()
         self.resize = True
-        self.Redraw()
+        self._redraw()
 
-    def Update(self):
-        if self.update:
-            self.update = False
-            self.Redraw()
+    def update(self):
+        if self.do_update:
+            self.do_update = False
+            self._redraw()
 
-    def Redraw(self):
+    def _redraw(self):
         if self.resize:
             self.resize = False
             self.screen = pygame.Surface(self.size, 0, 32)
@@ -325,7 +325,7 @@ class PuzzleFrame(wx.Panel):
         dc.DrawBitmap(bmp, 0, 0)
         del dc
 
-    def LoadPuzzle(self, path):
+    def load_puzzle(self, path):
         #number of columns
         n = 5
         #number of rows
@@ -367,8 +367,8 @@ class PuzzleFrame(wx.Panel):
                     new.attach(self.elements[i-n], Element.UP)
 
         for e in self.elements:
-            e.createFlatEdges()
-            #e.createRandomEdges()
+            e.create_flat_edges()
+            #e.create_random_edges()
 
         self.elements_group = EnhancedLayeredUpdates(self.elements)
-        self.update = True
+        self.do_update = True
